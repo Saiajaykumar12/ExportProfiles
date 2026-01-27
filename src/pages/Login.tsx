@@ -15,70 +15,100 @@ const Login = () => {
       .then(res => res.json())
       .then(data => {
         if (data.user) {
-          navigate("/dashboard");
+          navigate("/submit");
         }
       });
   }, [navigate]);
 
-<<<<<<< HEAD
   const handleGoogleLogin = () => {
     setLoading(true);
     window.location.href = "http://localhost:4000/auth/google";
   };
 
-=======
->>>>>>> 1638757d8d92251e9b1ce1de95d8fd6aa80943e3
   return (
-    <div className="min-h-screen gradient-subtle flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="bg-card rounded-2xl shadow-xl border border-border p-8 space-y-8">
+    <div className="min-h-screen gradient-subtle flex flex-col items-center justify-center p-6 relative overflow-hidden">
+      {/* Background Decor */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px] animate-float" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-primary/10 rounded-full blur-[150px] animate-float" style={{ animationDelay: '-3s' }} />
+
+      <div className="w-full max-w-lg relative z-10 animate-reveal">
+        <div className="glass-effect rounded-[2.5rem] shadow-2xl p-10 md:p-16 space-y-12 text-center">
           {/* Logo & Header */}
-          <div className="text-center space-y-3">
-            <div className="mx-auto w-16 h-16 gradient-primary rounded-2xl flex items-center justify-center shadow-lg">
-              <Link2 className="w-8 h-8 text-primary-foreground" />
+          <div className="space-y-6">
+            <div className="mx-auto w-24 h-24 gradient-primary rounded-[2rem] flex items-center justify-center shadow-2xl transform hover:scale-105 transition-transform duration-500">
+              <Link2 className="w-12 h-12 text-primary-foreground" />
             </div>
-            <h1 className="text-2xl font-bold text-foreground">LinkDrop</h1>
-            <p className="text-muted-foreground">
-              Submit and manage your links effortlessly
-            </p>
+            <div className="space-y-3">
+              <h1 className="text-3xl font-black tracking-tight text-foreground bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/70">
+                ExportProfileMiner
+              </h1>
+              <p className="text-muted-foreground text-xl font-medium max-w-sm mx-auto leading-relaxed">
+                Extract and <span className="text-primary italic">export</span> profile data effortlessly.
+              </p>
+            </div>
           </div>
 
-<<<<<<< HEAD
           {/* Google Login Button */}
-          <Button
-            onClick={handleGoogleLogin}
-            variant="outline"
-            className="w-full h-12 text-base font-medium gap-3 border-2 hover:bg-accent hover:border-primary/20 transition-all duration-200"
-            disabled={loading}
-          >
-            <svg className="w-5 h-5" viewBox="0 0 24 24">
-              <path
-                fill="currentColor"
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-              />
-              <path
-                fill="currentColor"
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-              />
-              <path
-                fill="currentColor"
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-              />
-              <path
-                fill="currentColor"
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-              />
-            </svg>
-            {loading ? "Redirecting..." : "Continue with Google"}
-          </Button>
+          <div className="space-y-6">
+            <Button
+              onClick={handleGoogleLogin}
+              disabled={loading}
+              className="w-full h-20 text-xl font-bold rounded-3xl gap-4 bg-foreground text-background hover:bg-foreground/90 hover:-translate-y-1 active:translate-y-0 transition-all duration-300 shadow-xl group"
+            >
+              {loading ? (
+                <div className="w-7 h-7 border-[3px] border-background/30 border-t-background rounded-full animate-spin" />
+              ) : (
+                <>
+                  <svg className="w-8 h-8 group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
+                    <path
+                      fill="currentColor"
+                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                    />
+                    <path
+                      fill="currentColor"
+                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    />
+                    <path
+                      fill="currentColor"
+                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                    />
+                    <path
+                      fill="currentColor"
+                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                    />
+                  </svg>
+                  <span>Continue with Google</span>
+                </>
+              )}
+            </Button>
 
-=======
->>>>>>> 1638757d8d92251e9b1ce1de95d8fd6aa80943e3
-          {/* Footer */}
-          <p className="text-center text-sm text-muted-foreground">
-            By continuing, you agree to our Terms of Service
-          </p>
+            <div className="grid grid-cols-3 gap-4 items-center px-4">
+              <div className="h-[1px] bg-border" />
+              <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Premium SaaS</span>
+              <div className="h-[1px] bg-border" />
+            </div>
+          </div>
+
+          {/* Stats Preview */}
+          <div className="grid grid-cols-3 gap-6 pt-4">
+            <div className="space-y-1">
+              <p className="text-2xl font-black text-foreground">10k+</p>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">Profiles Mined</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-2xl font-black text-foreground">24/7</p>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">Availability</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-2xl font-black text-foreground">Fast</p>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">Cloud Sync</p>
+            </div>
+          </div>
         </div>
+
+        <p className="mt-10 text-center text-sm text-muted-foreground font-medium">
+          &copy; {new Date().getFullYear()} ExportProfileMiner. Built for processing profiles.
+        </p>
       </div>
     </div>
   );

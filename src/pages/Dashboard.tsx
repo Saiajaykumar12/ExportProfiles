@@ -3,28 +3,75 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Link2, LogOut, Send, User } from "lucide-react";
+import { Link2, LogOut, ExternalLink, Globe, User, UserPlus, Download } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+
+interface LinkItem {
+  id: number;
+  url: string;
+  title: string;
+  type: string;
+  firstName: string;
+  lastName: string;
+  createdAt: string;
+}
 
 const Dashboard = () => {
   const [user, setUser] = useState<any | null>(null);
-  const [link, setLink] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [links, setLinks] = useState<LinkItem[]>([]);
+  const [isLoadingLinks, setIsLoadingLinks] = useState(true);
+
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    fetch("http://localhost:4000/api/user", {
-      credentials: "include"
-    })
-      .then(res => res.json())
-      .then(data => {
-        if (!data.user) {
-          navigate("/");
-        } else {
-          setUser(data.user);
-        }
-      });
+    fetchUser();
+    fetchLinks();
   }, [navigate]);
+
+  const fetchUser = async () => {
+    try {
+      const res = await fetch("http://localhost:4000/api/user", {
+        credentials: "include"
+      });
+      const data = await res.json();
+      if (!data.user) {
+        navigate("/");
+      } else {
+        setUser(data.user);
+      }
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      navigate("/");
+    }
+  };
+
+  const fetchLinks = async () => {
+    try {
+      setIsLoadingLinks(true);
+      const res = await fetch("http://localhost:4000/api/links", {
+        credentials: "include"
+      });
+      const data = await res.json();
+      if (data.links) {
+        setLinks(data.links);
+      }
+    } catch (error) {
+      console.error("Error fetching links:", error);
+    } finally {
+      setIsLoadingLinks(false);
+    }
+  };
 
   const handleLogout = async () => {
     await fetch("http://localhost:4000/logout", {
@@ -34,150 +81,250 @@ const Dashboard = () => {
     navigate("/");
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleUseAnotherAccount = () => {
+    window.location.href = "http://localhost:4000/auth/google/choose";
+  };
 
-    let formattedLink = link.trim();
-    // Enforce https://
-    if (!/^https:\/\//i.test(formattedLink)) {
-      formattedLink = "https://" + formattedLink.replace(/^https?:\/\//i, "");
-    }
-
-    // Basic URL validation
-    let isValid = true;
-    if (!formattedLink) {
-      isValid = false;
-    } else {
-      try {
-        new URL(formattedLink);
-      } catch {
-        isValid = false;
+  const handleDeleteLink = async (id: number) => {
+    try {
+      const res = await fetch(`http://localhost:4000/api/links/${id}`, {
+        method: "DELETE",
+        credentials: "include"
+      });
+      if (res.ok) {
+        setLinks(links.filter(l => l.id !== id));
+        toast({
+          title: "Deleted",
+          description: "Link has been removed successfully",
+        });
       }
-    }
-
-    if (isValid) {
-      window.open(formattedLink, "_blank", "noopener,noreferrer");
-    }
-
-    if (!link.trim()) {
+    } catch (error) {
       toast({
         title: "Error",
-        description: "Please enter a valid link",
+        description: "Failed to delete link",
         variant: "destructive",
       });
-      return;
     }
+  };
 
-    if (!isValid) {
+  const handleDownload = async (link: LinkItem, index: number) => {
+    if (!user?.email) {
       toast({
-        title: "Invalid URL",
-        description: "Please enter a valid URL starting with https://",
+        title: "Error",
+        description: "User email not found",
         variant: "destructive",
       });
       return;
     }
 
-    setIsSubmitting(true);
+    try {
+      toast({
+        title: "Processing Download",
+        description: "Generating your CSV file...",
+      });
 
-    // Simulate submission (you can add database storage here later)
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await fetch("http://localhost:5678/webhook/0e3021c3-d8d5-4010-8d53-ec5333abb643", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          url: link.url,
+          email: user.email,
+          serialNumber: links.length - index,
+          type: link.type || "Basic URL",
+        }),
+      });
 
-    toast({
-      title: "Success!",
-      description: "Your link has been submitted successfully",
-    });
+      if (!response.ok) {
+        throw new Error("Failed to generate CSV");
+      }
 
-    setLink("");
-    setIsSubmitting(false);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `profile_data_${link.id}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: "Success",
+        description: "Download started successfully",
+      });
+    } catch (error) {
+      console.error("Download error:", error);
+      toast({
+        title: "Download Failed",
+        description: "Could not download the file. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
-    <div className="min-h-screen gradient-subtle">
+    <div className="min-h-screen bg-white flex flex-col font-sans">
       {/* Header */}
-      <header className="bg-card/80 backdrop-blur-sm border-b border-border sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 gradient-primary rounded-xl flex items-center justify-center">
-              <Link2 className="w-5 h-5 text-primary-foreground" />
+      <header className="px-6 h-20 flex items-center border-b border-gray-100">
+        <div className="max-w-7xl mx-auto w-full flex items-center justify-between">
+          <div className="flex items-center gap-4 group cursor-pointer" onClick={() => navigate("/dashboard")}>
+            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
+              <Link2 className="w-5 h-5 text-white" />
             </div>
-            <span className="text-lg font-semibold text-foreground">LinkDrop</span>
+            <span className="text-xl font-bold text-gray-900 tracking-tight">ExportProfileMiner</span>
           </div>
-          
+
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <User className="w-4 h-4" />
-              <span className="hidden sm:inline">{user?.email}</span>
-            </div>
-            <Button
-              onClick={handleLogout}
-              variant="ghost"
-              size="sm"
-              className="gap-2 text-muted-foreground hover:text-foreground"
-            >
-              <LogOut className="w-4 h-4" />
-              <span className="hidden sm:inline">Logout</span>
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0 overflow-hidden border border-gray-200 hover:border-primary transition-all shadow-sm">
+                  <Avatar className="h-full w-full">
+                    <AvatarImage src={user?.photo} alt={user?.displayName || "User"} />
+                    <AvatarFallback className="bg-gray-50 text-primary font-bold">
+                      {user?.displayName?.[0]?.toUpperCase() || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-64 mt-2 p-2 rounded-xl bg-white shadow-xl border border-gray-100" align="end">
+                <DropdownMenuLabel className="p-3">
+                  <div className="flex flex-col space-y-0.5">
+                    <p className="text-sm font-bold text-gray-900">{user?.displayName}</p>
+                    <p className="text-xs font-medium text-gray-500 truncate italic">
+                      {user?.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-gray-100" />
+                <DropdownMenuItem className="gap-2.5 p-2 rounded-lg cursor-pointer text-sm font-medium text-gray-700 hover:bg-primary/10 hover:text-primary transition-colors">
+                  <User className="w-4 h-4" />
+                  <span>Account Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="gap-2.5 p-2 rounded-lg cursor-pointer text-sm text-primary font-medium hover:bg-primary/10 transition-colors" onClick={handleUseAnotherAccount}>
+                  <UserPlus className="w-4 h-4" />
+                  <span>Switch Account</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-gray-100" />
+                <DropdownMenuItem className="gap-2.5 p-2 rounded-lg cursor-pointer text-sm text-red-600 font-medium hover:bg-red-50 transition-colors" onClick={handleLogout}>
+                  <LogOut className="w-4 h-4" />
+                  <span>Sign Out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 py-12">
-        <div className="text-center mb-12">
-          <h1 className="text-3xl font-bold text-foreground mb-3">
-            Welcome back!
-          </h1>
-          <p className="text-muted-foreground text-lg">
-            Drop your link below to submit it
-          </p>
-        </div>
+      <main className="max-w-7xl mx-auto w-full px-6 py-10 flex-1">
+        <h1 className="text-3xl font-black text-gray-900 mb-10">Dashboard</h1>
 
-        {/* Link Submission Card */}
-        <div className="bg-card rounded-2xl shadow-lg border border-border p-8 max-w-2xl mx-auto">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <label
-                htmlFor="link"
-                className="text-sm font-medium text-foreground"
-              >
-                Enter your link
-              </label>
-              <div className="relative">
-                <Link2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                <Input
-                  id="link"
-                  type="url"
-                  placeholder="https://example.com"
-                  value={link}
-                  onChange={(e) => setLink(e.target.value)}
-                  className="pl-12 h-14 text-base border-2 focus:border-primary/50 transition-colors"
-                />
+        <div className="space-y-12">
+          {/* Links Table Area */}
+          <div className="border-2 border-primary/20 p-8 bg-white shadow-lg rounded-lg relative min-h-[500px]">
+            <div className="flex flex-col mb-8">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-lg font-black uppercase tracking-tighter">Your Archived Links</h2>
+                <Button
+                  onClick={() => navigate("/submit")}
+                  className="bg-primary text-white font-black px-6 py-6 hover:bg-primary/90 transition-colors rounded-md shadow-md"
+                >
+                  Extract New Profile
+                </Button>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Paste any valid URL to submit
-              </p>
+
+              <div className="grid grid-cols-[60px_1fr_150px_150px_180px_120px_120px_120px] gap-4 w-full text-xs font-black text-gray-800 border-b-2 border-primary pb-4 uppercase tracking-widest bg-primary/5 p-2 rounded-md">
+                <div>SNO</div>
+                <div>LINK</div>
+                <div className="text-center">FIRST NAME</div>
+                <div className="text-center">LAST NAME</div>
+                <div className="text-center">TYPE</div>
+                <div className="text-center">TIME</div>
+                <div className="text-center">DATE</div>
+                <div className="text-right">DOWNLOAD</div>
+              </div>
             </div>
 
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full h-12 text-base font-medium gradient-primary hover:opacity-90 transition-opacity gap-2"
-            >
-              {isSubmitting ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                  Submitting...
-                </>
+            <div className="mt-4 space-y-2 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+              {isLoadingLinks ? (
+                <div className="flex justify-center py-20">
+                  <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : links.length > 0 ? (
+                links.map((link, index) => (
+                  <div key={link.id} className="grid grid-cols-[60px_1fr_150px_150px_180px_120px_120px_120px] gap-4 items-center text-sm text-gray-700 py-4 hover:bg-primary/5 rounded-md border-b border-gray-100 px-2 transition-colors group">
+                    <div className="font-black text-gray-300 group-hover:text-primary transition-colors">#{links.length - index}</div>
+                    <div className="truncate pr-4">
+                      <a
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary font-bold hover:underline flex items-center gap-2 truncate"
+                        title={link.url}
+                      >
+                        {link.url}
+                        <ExternalLink className="w-3 h-3 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </a>
+                    </div>
+                    <div className="text-center font-bold text-gray-700">{link.firstName || '-'}</div>
+                    <div className="text-center font-bold text-gray-700">{link.lastName || '-'}</div>
+                    <div className="text-center">
+                      <span className="inline-block px-3 py-1 bg-gray-100 text-[10px] font-black uppercase tracking-widest rounded-full text-gray-600 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                        {link.type}
+                      </span>
+                    </div>
+                    <div className="text-center font-bold text-gray-500">{new Date(link.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' })}</div>
+                    <div className="text-center font-bold text-gray-500">{new Date(link.createdAt).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })}</div>
+                    <div className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDownload(link, index)}
+                        className="p-1 h-auto text-primary font-black hover:text-white hover:bg-primary transition-all rounded-md flex items-center gap-2 ml-auto"
+                      >
+                        <Download className="w-4 h-4" />
+                        Download
+                      </Button>
+                    </div>
+                  </div>
+                ))
               ) : (
-                <>
-                  <Send className="w-5 h-5" />
-                  Submit Link
-                </>
+                <div className="text-center py-32 border-4 border-dashed border-gray-100 rounded-md bg-gray-50/30">
+                  <Globe className="w-16 h-16 text-gray-200 mx-auto mb-4" />
+                  <p className="text-gray-400 font-black uppercase tracking-widest">No profiles extracted yet</p>
+                  <Button
+                    variant="link"
+                    onClick={() => navigate("/submit")}
+                    className="text-primary font-bold mt-2"
+                  >
+                    Start extracting profiles &rarr;
+                  </Button>
+                </div>
               )}
-            </Button>
-          </form>
+            </div>
+
+            <div className="mt-12 text-center text-[10px] font-black text-gray-300 uppercase tracking-[0.3em]">
+              Profile Data Archive - Name, Type, Time, Date
+            </div>
+          </div>
         </div>
       </main>
+
+      <footer className="px-6 py-10 border-t border-gray-100 mt-auto">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-lg">
+              <Link2 className="w-4 h-4 text-white" />
+            </div>
+            <span className="text-sm font-bold text-gray-900 tracking-tight">ExportProfileMiner &copy; {new Date().getFullYear()}</span>
+          </div>
+          <div className="text-xs font-bold text-gray-400 uppercase tracking-widest animate-pulse italic">
+            System Status: Active
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
