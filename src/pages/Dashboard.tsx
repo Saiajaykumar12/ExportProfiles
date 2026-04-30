@@ -228,11 +228,25 @@ const Dashboard = () => {
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-lg font-black uppercase tracking-tighter">Your Archived Links</h2>
                 <Button
-                  onClick={() => navigate("/submit")}
+                  onClick={() => {
+                    if (links.length >= 5) {
+                      toast({
+                        title: "Limit Reached",
+                        description: "You can only add up to 5 links per account.",
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+                    navigate("/submit");
+                  }}
                   className="bg-primary text-white font-black px-6 py-6 hover:bg-primary/90 transition-colors rounded-md shadow-md"
+                  disabled={links.length >= 5}
                 >
                   Extract New Profile
                 </Button>
+                {links.length >= 5 && (
+                  <div className="text-xs text-red-500 font-bold mt-2">You have reached the maximum of 5 links per account.</div>
+                )}
               </div>
 
               <div className="grid grid-cols-[60px_1fr_150px_150px_180px_120px_120px_120px] gap-4 w-full text-xs font-black text-gray-800 border-b-2 border-primary pb-4 uppercase tracking-widest bg-primary/5 p-2 rounded-md">
