@@ -107,7 +107,7 @@ const Dashboard = () => {
     }
   };
 
-  const handleDownload = async (link: LinkItem, index: number) => {
+  const handleDownload = async (link: LinkItem) => {
     if (!user?.email) {
       toast({
         title: "Error",
@@ -123,17 +123,10 @@ const Dashboard = () => {
         description: "Generating your CSV file...",
       });
 
-      const response = await fetch("http://localhost:5678/webhook/0e3021c3-d8d5-4010-8d53-ec5333abb643", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          url: link.url,
-          email: user.email,
-          serialNumber: links.length - index,
-          type: link.type || "Basic URL",
-        }),
+      // Use your backend's new endpoint
+      const response = await fetch(`http://localhost:4000/api/download/${link.id}`, {
+        method: "GET",
+        credentials: "include",
       });
 
       if (!response.ok) {

@@ -192,6 +192,27 @@ app.get('/logout', (req, res) => {
   });
 });
 
+
+// --- Download Link as CSV ---
+app.get('/api/download/:linkId', ensureAuthenticated, async (req, res) => {
+  const linkId = req.params.linkId;
+  try {
+    // Fetch the link for the logged-in user
+    const link = await get('SELECT * FROM links WHERE id = ? AND userId = ?', [linkId, req.user.id]);
+    if (!link) {
+      return res.status(404).send('Link not found');
+    }
+    // Create CSV content with MAIL column
+    const csv = `SNO,LINK,FIRST NAME,LAST NAME,MAIL,TYPE,TIME,DATE\n1,${link.url},${link.firstName || ''},${link.lastName || ''},${req.user.email || ''},${link.type || ''},${new Date(link.createdAt).toLocaleTimeString()},${new Date(link.createdAt).toLocaleDateString()}`;
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="profile_data_${linkId}.csv"`);
+    res.send(csv);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Failed to generate CSV');
+  }
+});
+
 app.listen(4000, () => {
   console.log('Backend running on http://localhost:4000');
 });
