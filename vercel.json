@@ -1,0 +1,16 @@
+{
+  "experimentalServices": {
+    "frontend": {
+      "framework": "vite",
+      "rootDirectory": "./",
+      "outputDirectory": "dist",
+      "buildCommand": "npm run build"
+    },
+    "backend": {
+      "framework": "node",
+      "rootDirectory": "api",
+      "outputDirectory": "",
+      "buildCommand": ""
+    }
+  }
+}
