@@ -4,15 +4,20 @@ import session from 'express-session';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
-import { db, run, get, query } from './database.js'; // Import DB helpers
+import { db } from './supabase.js'; // Import Supabase helpers
 
 dotenv.config();
 
 const app = express();
 
-// Enable CORS
+// Get environment variables
+const isProduction = process.env.NODE_ENV === 'production';
+const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:8080';
+const sessionSecret = process.env.SESSION_SECRET || 'secretkey';
+
+// Enable CORS with environment-based origin
 app.use(cors({
-  origin: 'http://localhost:8080',
+  origin: frontendUrl,
   credentials: true
 }));
 
@@ -20,10 +25,14 @@ app.use(cors({
 app.use(express.json());
 
 app.use(session({
-  secret: 'secretkey',
+  secret: sessionSecret,
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false } // set to true if using HTTPS
+  cookie: { 
+    secure: isProduction, // true only in production (HTTPS)
+    httpOnly: true,
+    sameSite: 'lax'
+  }
 }));
 
 app.use(passport.initialize());
@@ -36,25 +45,22 @@ passport.use(new GoogleStrategy({
 }, async (accessToken, refreshToken, profile, done) => {
   try {
     // Check if user exists
-    let user = await get('SELECT * FROM users WHERE googleId = ?', [profile.id]);
+    let user = await db.get('users', { google_id: profile.id });
 
     if (!user) {
       // Create new user
-      const result = await run(
-        'INSERT INTO users (id, googleId, displayName, email, photo, provider) VALUES (?, ?, ?, ?, ?, ?)',
-        [
-          profile.id, // using google id as user id for simplicity, or generate a uuid
-          profile.id,
-          profile.displayName,
-          profile.emails[0].value,
-          profile.photos[0].value,
-          'google'
-        ]
-      );
-      user = await get('SELECT * FROM users WHERE id = ?', [profile.id]);
+      user = await db.insert('users', {
+        id: profile.id,
+        google_id: profile.id,
+        display_name: profile.displayName,
+        email: profile.emails[0]?.value,
+        photo: profile.photos[0]?.value,
+        provider: 'google'
+      });
     }
     return done(null, user);
   } catch (err) {
+    console.error('Auth error:', err);
     return done(err);
   }
 }));
@@ -65,9 +71,10 @@ passport.serializeUser((user, done) => {
 
 passport.deserializeUser(async (id, done) => {
   try {
-    const user = await get('SELECT * FROM users WHERE id = ?', [id]);
+    const user = await db.get('users', { id });
     done(null, user);
   } catch (err) {
+    console.error('Deserialize error:', err);
     done(err);
   }
 });
@@ -93,7 +100,7 @@ app.get('/auth/google/callback', passport.authenticate('google', {
   session: true
 }), (req, res) => {
   // Redirect to frontend submission page after login
-  res.redirect('http://localhost:8080/submit');
+  res.redirect(`${frontendUrl}/submit`);
 });
 
 // User API
@@ -118,7 +125,7 @@ const ensureAuthenticated = (req, res, next) => {
 // GET /api/links - Get all links for the logged-in user
 app.get('/api/links', ensureAuthenticated, async (req, res) => {
   try {
-    const links = await query('SELECT * FROM links WHERE userId = ? ORDER BY createdAt DESC', [req.user.id]);
+    const links = await db.query('links', { user_id: req.user.id }, { orderBy: { column: 'created_at', ascending: false } });
     res.json({ links });
   } catch (err) {
     console.error(err);
@@ -136,24 +143,34 @@ app.post('/api/links', ensureAuthenticated, async (req, res) => {
 
   try {
     // Check if user has already saved a link today
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-    const startOfDay = `${today} 00:00:00`;
-    const endOfDay = `${today} 23:59:59`;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-    const count = await get(
-      'SELECT COUNT(*) as count FROM links WHERE userId = ? AND createdAt BETWEEN ? AND ?',
-      [req.user.id, startOfDay, endOfDay]
-    );
+    const count = await db.count('links', { 
+      user_id: req.user.id 
+    });
 
-    if (count.count >= 50) {
+    // Check links created today
+    const linksToday = await db.query('links', { user_id: req.user.id });
+    const todayCount = linksToday.filter(link => {
+      const linkDate = new Date(link.created_at);
+      linkDate.setHours(0, 0, 0, 0);
+      return linkDate.getTime() === today.getTime();
+    }).length;
+
+    if (todayCount >= 50) {
       return res.status(429).json({ error: 'Daily limit reached. You can only save 50 links per day.' });
     }
 
-    const result = await run(
-      'INSERT INTO links (userId, url, title, type, firstName, lastName) VALUES (?, ?, ?, ?, ?, ?)',
-      [req.user.id, url, title || url, type || 'Basic URL', firstName || '', lastName || '']
-    );
-    const newLink = await get('SELECT * FROM links WHERE id = ?', [result.id]);
+    const newLink = await db.insert('links', {
+      user_id: req.user.id,
+      url,
+      title: title || url,
+      type: type || 'Basic URL',
+      first_name: firstName || '',
+      last_name: lastName || ''
+    });
+
     res.status(201).json({ link: newLink });
   } catch (err) {
     console.error(err);
@@ -167,17 +184,17 @@ app.delete('/api/links/:id', ensureAuthenticated, async (req, res) => {
 
   try {
     // Check if link belongs to user
-    const link = await get('SELECT * FROM links WHERE id = ?', [linkId]);
+    const link = await db.get('links', { id: parseInt(linkId) });
 
     if (!link) {
       return res.status(404).json({ error: 'Link not found' });
     }
 
-    if (link.userId !== req.user.id) {
+    if (link.user_id !== req.user.id) {
       return res.status(403).json({ error: 'Unauthorized' });
     }
 
-    await run('DELETE FROM links WHERE id = ?', [linkId]);
+    await db.delete('links', { id: parseInt(linkId) });
     res.json({ success: true });
   } catch (err) {
     console.error(err);
@@ -198,12 +215,14 @@ app.get('/api/download/:linkId', ensureAuthenticated, async (req, res) => {
   const linkId = req.params.linkId;
   try {
     // Fetch the link for the logged-in user
-    const link = await get('SELECT * FROM links WHERE id = ? AND userId = ?', [linkId, req.user.id]);
+    const link = await db.get('links', { id: parseInt(linkId), user_id: req.user.id });
+    
     if (!link) {
       return res.status(404).send('Link not found');
     }
+    
     // Create CSV content with MAIL column
-    const csv = `SNO,LINK,FIRST NAME,LAST NAME,MAIL,TYPE,TIME,DATE\n1,${link.url},${link.firstName || ''},${link.lastName || ''},${req.user.email || ''},${link.type || ''},${new Date(link.createdAt).toLocaleTimeString()},${new Date(link.createdAt).toLocaleDateString()}`;
+    const csv = `SNO,LINK,FIRST NAME,LAST NAME,MAIL,TYPE,TIME,DATE\n1,${link.url},${link.first_name || ''},${link.last_name || ''},${req.user.email || ''},${link.type || ''},${new Date(link.created_at).toLocaleTimeString()},${new Date(link.created_at).toLocaleDateString()}`;
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', `attachment; filename="profile_data_${linkId}.csv"`);
     res.send(csv);
@@ -213,6 +232,7 @@ app.get('/api/download/:linkId', ensureAuthenticated, async (req, res) => {
   }
 });
 
-app.listen(4000, () => {
-  console.log('Backend running on http://localhost:4000');
+const PORT = process.env.PORT || 8081;
+app.listen(PORT, () => {
+  console.log(`Backend running on http://localhost:${PORT}`);
 });

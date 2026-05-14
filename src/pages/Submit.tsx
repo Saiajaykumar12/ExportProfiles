@@ -106,7 +106,7 @@ const Submit = () => {
 
     const fetchUser = async () => {
         try {
-            const res = await fetch("http://localhost:4000/api/user", {
+            const res = await fetch("http://localhost:8081/api/user", {
                 credentials: "include"
             });
             const data = await res.json();
@@ -144,7 +144,7 @@ const Submit = () => {
             // Fetch current link count to determine Serial Number
             let serialNumber = 1;
             try {
-                const linkRes = await fetch("http://localhost:4000/api/links", {
+                const linkRes = await fetch("http://localhost:8081/api/links", {
                     credentials: "include"
                 });
                 const linkData = await linkRes.json();
@@ -171,7 +171,7 @@ const Submit = () => {
                 console.error("Error triggering webhook:", webhookError);
             }
 
-            const res = await fetch("http://localhost:4000/api/links", {
+            const res = await fetch("http://localhost:8081/api/links", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

@@ -9,7 +9,7 @@ const Login = () => {
 
   // Check if user is already authenticated
   useEffect(() => {
-    fetch("http://localhost:4000/api/user", {
+    fetch("http://localhost:8081/api/user", {
       credentials: "include"
     })
       .then(res => res.json())
@@ -22,7 +22,7 @@ const Login = () => {
 
   const handleGoogleLogin = () => {
     setLoading(true);
-    window.location.href = "http://localhost:4000/auth/google";
+    window.location.href = "http://localhost:8081/auth/google";
   };
 
   return (

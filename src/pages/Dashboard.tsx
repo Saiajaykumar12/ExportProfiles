@@ -41,7 +41,7 @@ const Dashboard = () => {
 
   const fetchUser = async () => {
     try {
-      const res = await fetch("http://localhost:4000/api/user", {
+      const res = await fetch("http://localhost:8081/api/user", {
         credentials: "include"
       });
       const data = await res.json();
@@ -59,7 +59,7 @@ const Dashboard = () => {
   const fetchLinks = async () => {
     try {
       setIsLoadingLinks(true);
-      const res = await fetch("http://localhost:4000/api/links", {
+      const res = await fetch("http://localhost:8081/api/links", {
         credentials: "include"
       });
       const data = await res.json();
@@ -74,7 +74,7 @@ const Dashboard = () => {
   };
 
   const handleLogout = async () => {
-    await fetch("http://localhost:4000/logout", {
+    await fetch("http://localhost:8081/logout", {
       method: "GET",
       credentials: "include"
     });
@@ -82,12 +82,12 @@ const Dashboard = () => {
   };
 
   const handleUseAnotherAccount = () => {
-    window.location.href = "http://localhost:4000/auth/google/choose";
+    window.location.href = "http://localhost:8081/auth/google/choose";
   };
 
   const handleDeleteLink = async (id: number) => {
     try {
-      const res = await fetch(`http://localhost:4000/api/links/${id}`, {
+      const res = await fetch(`http://localhost:8081/api/links/${id}`, {
         method: "DELETE",
         credentials: "include"
       });
@@ -124,7 +124,7 @@ const Dashboard = () => {
       });
 
       // Use your backend's new endpoint
-      const response = await fetch(`http://localhost:4000/api/download/${link.id}`, {
+      const response = await fetch(`http://localhost:8081/api/download/${link.id}`, {
         method: "GET",
         credentials: "include",
       });
