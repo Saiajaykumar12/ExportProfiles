@@ -145,8 +145,8 @@ Google Cloud Console
 
 ```bash
 # Google OAuth (already have)
-GOOGLE_CLIENT_ID=715186309950-kn1nc4p7sgo8hkoh6vj1j2vagflni8qp.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=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
+GOOGLE_CLIENT_ID=your_google_client_id_here
+GOOGLE_CLIENT_SECRET=your_google_client_secret_here
 
 # Supabase (get from dashboard)
 SUPABASE_URL=https://your-project.supabase.co

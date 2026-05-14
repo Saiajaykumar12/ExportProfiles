@@ -91,8 +91,8 @@ backend/.env
 
 ### Replace with this:
 ```
-GOOGLE_CLIENT_ID=715186309950-kn1nc4p7sgo8hkoh6vj1j2vagflni8qp.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=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
+GOOGLE_CLIENT_ID=your_google_client_id_here
+GOOGLE_CLIENT_SECRET=your_google_client_secret_here
 SUPABASE_URL=<paste KEY 1 here>
 SUPABASE_ANON_KEY=<paste KEY 2 here>
 SUPABASE_SERVICE_ROLE_KEY=<paste KEY 3 here>

@@ -45,8 +45,8 @@ Once your project loads:
 Edit `backend/.env` and update these values:
 
 ```
-GOOGLE_CLIENT_ID=715186309950-kn1nc4p7sgo8hkoh6vj1j2vagflni8qp.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=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
+GOOGLE_CLIENT_ID=your_google_client_id_here
+GOOGLE_CLIENT_SECRET=your_google_client_secret_here
 
 # ADD THESE (from Supabase):
 SUPABASE_URL=<paste your Project URL here>
@@ -171,8 +171,8 @@ Vercel will show a configuration page. Click **"Environment Variables"**
 
 Add these (from your Supabase credentials):
 ```
-GOOGLE_CLIENT_ID = 715186309950-kn1nc4p7sgo8hkoh6vj1j2vagflni8qp.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET = 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
+GOOGLE_CLIENT_ID = your_google_client_id_here
+GOOGLE_CLIENT_SECRET = your_google_client_secret_here
 SUPABASE_URL = <your Supabase URL>
 SUPABASE_ANON_KEY = <your anon key>
 SUPABASE_SERVICE_ROLE_KEY = <your service role key>
