@@ -1,73 +1,85 @@
-# Welcome to your Lovable project
+# ExportProfiles 🚀
 
-## Project info
+A full-stack web application that allows users to **sign in with Google, save URLs/links, and export their saved profiles as a CSV file**.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+Built during my **AI Automation Internship** using Lovable (AI UI builder) and Claude AI.
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+## 🔍 What It Does
 
-**Use Lovable**
+- Google OAuth login (sign in with your Google account)
+- Save URLs with title, type, first name, and last name
+- Daily link limit per user
+- Export all saved links as a **CSV file**
+- Fully deployed on **Vercel** with a cloud database
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+---
 
-Changes made via Lovable will be committed automatically to this repo.
+## 🛠 Tech Stack
 
-**Use your preferred IDE**
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React, TypeScript, Vite, Tailwind CSS, shadcn/ui |
+| Backend | Node.js, Express (Serverless on Vercel) |
+| Database | Supabase (PostgreSQL) |
+| Auth | Google OAuth 2.0 |
+| Deployment | Vercel |
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+---
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 🏗 Architecture
+Browser
+↓
+Vercel Frontend (React + Vite)
+↓ API calls
+Vercel Backend (Express serverless)
+↓ queries
+Supabase PostgreSQL (Cloud Database)
+↓ auth
+Google Cloud Console (OAuth)
 
-Follow these steps:
+---
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## ⚙️ Features
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+- ✅ Google OAuth authentication
+- ✅ Save and manage profile links
+- ✅ Daily link limit enforcement
+- ✅ CSV export functionality
+- ✅ Row Level Security (RLS) on database
+- ✅ Production-ready deployment on Vercel
 
-# Step 3: Install the necessary dependencies.
-npm i
+---
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+## 🤖 Built With AI
 
-**Edit a file directly in GitHub**
+This project was built entirely using AI tools:
+- **Lovable** — for UI generation and frontend scaffolding
+- **Claude AI** — for backend logic, database design, and deployment setup
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+---
 
-**Use GitHub Codespaces**
+## 🚀 Getting Started
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+1. Clone the repo  
+   `git clone https://github.com/Saiajaykumar12/ExportProfiles.git`
 
-## What technologies are used for this project?
+2. Install dependencies  
+   `npm install`
 
-This project is built with:
+3. Set up environment variables (see `.env.example`)
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+4. Start the dev server  
+   `npm run dev`
 
-## How can I deploy this project?
+See `SETUP_GUIDE.md` for full setup instructions including Supabase and Google OAuth configuration.
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+---
 
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## 📁 Project Structure
+├── src/          # React frontend
+├── backend/      # Express API (serverless)
+├── supabase/     # DB migrations
+├── api/          # Vercel API routes
+└── public/       # Static assets
